@@ -4,31 +4,21 @@ export async function POST(req: NextRequest) {
   try {
     const { message } = await req.json()
     
-    console.log('Chamando backend:', process.env.NEXT_PUBLIC_API_URL)
-    
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 30000) // 30s
-    
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message }),
-      signal: controller.signal
+      // Timeout manual simples
     })
     
-    clearTimeout(timeout)
-    
-    if (!res.ok) {
-      throw new Error(`Backend error: ${res.status}`)
-    }
-    
     const data = await res.json()
-    return NextResponse.json({ reply: data.response || data.reply })
+    return NextResponse.json({ reply: data.response })
     
-  } catch (error) {
-    console.error('API Error:', error)
+  } catch (error: any) {
     return NextResponse.json({ 
-      reply: `❌ Erro backend: ${error.message}. Tente novamente.` 
+      reply: error.name === 'AbortError' 
+        ? '⏳ Moni pensando... Aguarde 30s' 
+        : '❌ Backend offline. Tente novamente.'
     })
   }
 }
