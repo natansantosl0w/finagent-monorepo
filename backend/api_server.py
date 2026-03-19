@@ -2,14 +2,12 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import google.generativeai as genai
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-model = genai.GenerativeModel('gemini-2.5-flash')
 
 app = FastAPI()
+
+# Config direto (sem dotenv pra Render)
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 class Pergunta(BaseModel):
     message: str
@@ -21,14 +19,16 @@ def health():
 @app.post("/chat")
 async def chat(pergunta: Pergunta):
     try:
-        prompt = f"""FinAgent financeiro brasileiro.
-Pergunta: {pergunta.message}
-
-Responda direto em português usando R$."""
-        response = model.generate_content(prompt)
-        return {"response": response.text}
+        response = model.generate_content(
+            pergunta.message,
+            generation_config={
+                "max_output_tokens": 200,
+                "temperature": 0.1
+            }
+        )
+        return {"response": response.text[:800]}
     except Exception as e:
-        return {"error": f"Erro: {str(e)}"}
+        return {"response": f"Erro: {str(e)[:100]}"}
 
 if __name__ == "__main__":
     import uvicorn
