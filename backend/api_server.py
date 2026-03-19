@@ -1,5 +1,39 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import requests
+import os
+import json
+
+app = FastAPI()
+
+class Pergunta(BaseModel):
+    message: str
+
+@app.get("/health")
+def health():
+    return {"status": "TOGETHER AI", "free": True}
+
+@app.post("/chat")
+async def chat(pergunta: Pergunta):
+    api_key = os.getenv("TOGETHER_API_KEY")
+    if not api_key:
+        return {"error": "No API key"}
+    
+    url = "https://api.together.xyz/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",  # FREE!
+        "messages": [{"role": "user", "content": f"Finanças Brasil: {pergunta.message}"}],
+        "max_tokens": 200
+    }
+    
+    resp = requests.post(url, headers=headers, json=data)
+    return resp.json()
+from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI()
 
