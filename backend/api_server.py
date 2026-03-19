@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 app = FastAPI()
@@ -19,12 +20,15 @@ def health():
 
 @app.post("/chat")
 async def chat(pergunta: Pergunta):
-    prompt = f"""FinAgent brasileiro inteligente.
+    try:
+        prompt = f"""FinAgent financeiro brasileiro.
 Pergunta: {pergunta.message}
-Responda direto em PT-BR usando R$."""
-    
-    response = model.generate_content(prompt)
-    return {"response": response.text}
+
+Responda direto em português usando R$."""
+        response = model.generate_content(prompt)
+        return {"response": response.text}
+    except Exception as e:
+        return {"error": f"Erro: {str(e)}"}
 
 if __name__ == "__main__":
     import uvicorn
