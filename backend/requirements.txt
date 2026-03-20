@@ -1,4 +1,3 @@
-requests
 fastapi
 uvicorn[standard]
-pydantic
+# SEM pydantic/requests = 0 crash
