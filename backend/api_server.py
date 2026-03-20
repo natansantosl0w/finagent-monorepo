@@ -1,31 +1,46 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-import requests
+from fastapi import FastAPI, Request
+import json
+import urllib.request
 import os
 
 app = FastAPI()
 
-class Pergunta(BaseModel):
-    message: str
-
 @app.get("/health")
 def health():
-    return {"status": "TOGETHER", "key_ok": bool(os.getenv("TOGETHER_API_KEY"))}
+    return {
+        "status": "GROQ LIVE", 
+        "groq_key": bool(os.getenv("GROQ_API_KEY")),
+        "together_key": bool(os.getenv("TOGETHER_API_KEY"))
+    }
 
 @app.post("/chat")
-async def chat(pergunta: Pergunta):
-    key = os.getenv("TOGETHER_API_KEY")
-    if not key:
-        return {"response": "❌ TOGETHER_API_KEY missing. Render Environment."}
+async def chat(request: Request):
+    data = await request.json()
+    msg = data["message"]
     
-    r = requests.post(
-        "https://api.together.xyz/v1/chat/completions",
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-        json={
-            "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-            "messages": [{"role": "user", "content": pergunta.message}],
-            "max_tokens": 400
-        }
-    )
-    data = r.json()
-    return {"response": data['choices'][0]['message']['content']}
+    # Prioridade GROQ > Together
+    key = os.getenv("GROQ_API_KEY") or os.getenv("TOGETHER_API_KEY")
+    if not key:
+        return {"response": "❌ API key missing. Render Environment GROQ_API_KEY or TOGETHER_API_KEY"}
+    
+    # GROQ endpoint + model
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    payload = {
+        "model": "llama3-70b-8192",  # GROQ FREE rápido!
+        "messages": [{"role": "user", "content": f"Finanças Brasil 2026: {msg}. Responda prático direto."}],
+        "max_tokens": 400,
+        "temperature": 0.1
+    }
+    
+    req_data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(url, data=req_data, headers={
+        'Authorization': f'Bearer {key}',
+        'Content-Type': 'application/json'
+    }, method='POST')
+    
+    try:
+        with urllib.request.urlopen(req) as resp:
+            result = json.loads(resp.read())
+            return {"response": result['choices'][0]['message']['content']}
+    except Exception as e:
+        return {"response": f"Erro: {str(e)}. Fallback: Corte gastos, pague dívidas juro alto primeiro, Tesouro Selic reserva."}
