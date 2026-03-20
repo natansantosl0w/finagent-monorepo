@@ -32,9 +32,7 @@ async def chat(request: Request):
                 "contents": [
                     {
                         "parts": [
-                            {
-                                "text": f"Você é uma IA de finanças no Brasil. Responda direto e prático: {msg}"
-                            }
+                            {"text": msg}
                         ]
                     }
                 ]
@@ -43,9 +41,16 @@ async def chat(request: Request):
 
         data = response.json()
 
-        return {
-            "response": data["candidates"][0]["content"]["parts"][0]["text"]
-        }
+        # 🔒 SAFE PARSE (não quebra mais)
+        if "candidates" in data:
+            return {
+                "response": data["candidates"][0]["content"]["parts"][0]["text"]
+            }
+        else:
+            return {
+                "error": "Resposta inesperada do Gemini",
+                "raw": data
+            }
 
     except Exception as e:
         import traceback
