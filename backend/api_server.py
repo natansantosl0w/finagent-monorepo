@@ -19,39 +19,56 @@ def health():
 async def chat(request: Request):
     data = await request.json()
     msg = data["message"]
-    
-    # Prioridade GROQ > Together
-    key = os.getenv("GROQ_API_KEY") or os.getenv("TOGETHER_API_KEY")
-    if not key:
-        return {"response": "❌ API key missing. Render Environment GROQ_API_KEY or TOGETHER_API_KEY"}
-    
-    # GROQ endpoint + model
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    payload = {
-        "model": "llama3-70b-8192",
-        "messages": [{"role": "user", "content": f"Finanças Brasil 2026: {msg}. Responda prático direto."}],
-        "max_tokens": 400,
-        "temperature": 0.1
-    }
-    
-    req_data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(
-        url,
-        data=req_data,
-        headers={
-            'Authorization': f'Bearer {key}',
-            'Content-Type': 'application/json'
-        },
-        method='POST'
-    )
-    
+
+    groq_key = os.getenv("GROQ_API_KEY")
+    together_key = os.getenv("TOGETHER_API_KEY")
+
+    if not groq_key and not together_key:
+        return {"response": "❌ Nenhuma API key configurada"}
+
     try:
+        # TENTA GROQ PRIMEIRO
+        if groq_key:
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            key = groq_key
+        else:
+            # fallback Together (simples)
+            url = "https://api.together.xyz/v1/chat/completions"
+            key = together_key
+
+        payload = {
+            "model": "llama3-70b-8192",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": f"Finanças Brasil 2026: {msg}. Responda direto."
+                }
+            ],
+            "max_tokens": 400,
+            "temperature": 0.1
+        }
+
+        req_data = json.dumps(payload).encode("utf-8")
+
+        req = urllib.request.Request(
+            url,
+            data=req_data,
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json"
+            },
+            method="POST"
+        )
+
         with urllib.request.urlopen(req) as resp:
             result = json.loads(resp.read())
-            return {"response": result['choices'][0]['message']['content']}
-   except Exception as e:
-    import traceback
-    return {
-        "error": str(e),
-        "trace": traceback.format_exc()
-    }
+            return {
+                "response": result["choices"][0]["message"]["content"]
+            }
+
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "trace": traceback.format_exc()
+        }
