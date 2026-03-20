@@ -49,7 +49,9 @@ async def chat(request: Request):
         with urllib.request.urlopen(req) as resp:
             result = json.loads(resp.read())
             return {"response": result['choices'][0]['message']['content']}
-    except Exception as e:
-        return {
-            "response": f"Erro: {str(e)}. Fallback: Corte gastos, pague dívidas juro alto primeiro, Tesouro Selic reserva."
-        }
+   except Exception as e:
+    import traceback
+    return {
+        "error": str(e),
+        "trace": traceback.format_exc()
+    }
