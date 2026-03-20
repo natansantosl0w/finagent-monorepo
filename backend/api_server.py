@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
-import json
-import urllib.request
 import os
+import requests
 
 app = FastAPI()
 
@@ -21,52 +20,34 @@ async def chat(request: Request):
     msg = data.get("message", "")
 
     groq_key = os.getenv("GROQ_API_KEY")
-    together_key = os.getenv("TOGETHER_API_KEY")
 
-    if not groq_key and not together_key:
-        return {"response": "❌ Nenhuma API key configurada"}
+    if not groq_key:
+        return {"response": "❌ GROQ_API_KEY não configurada"}
 
     try:
-        # 🔥 GROQ (principal)
-        if groq_key:
-            url = "https://api.groq.com/openai/v1/chat/completions"
-            key = groq_key
-            model = "llama3-8b-8192"  # ✅ modelo garantido
-        else:
-            # fallback Together
-            url = "https://api.together.xyz/v1/chat/completions"
-            key = together_key
-            model = "meta-llama/Llama-3-8b-chat-hf"
-
-        payload = {
-            "model": model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"Finanças Brasil 2026: {msg}. Responda direto e prático."
-                }
-            ],
-            "max_tokens": 400,
-            "temperature": 0.1
-        }
-
-        req_data = json.dumps(payload).encode("utf-8")
-
-        req = urllib.request.Request(
-            url,
-            data=req_data,
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {key}",
+                "Authorization": f"Bearer {groq_key}",
                 "Content-Type": "application/json"
             },
-            method="POST"
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": f"Finanças Brasil 2026: {msg}. Responda direto e prático."
+                    }
+                ],
+                "temperature": 0.1,
+                "max_tokens": 400
+            }
         )
 
-        with urllib.request.urlopen(req) as resp:
-            result = json.loads(resp.read())
-            return {
-                "response": result["choices"][0]["message"]["content"]
-            }
+        return {
+            "status_code": response.status_code,
+            "response": response.json()
+        }
 
     except Exception as e:
         import traceback
