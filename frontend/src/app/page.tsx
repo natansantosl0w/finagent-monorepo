@@ -214,7 +214,7 @@ export default function Home() {
         </div>
 
         <div className="px-4 py-3 border-t border-white/10">
-          <p className="text-xs text-slate-600 text-center">Moni pode cometer erros.</p>
+          <p className="text-xs text-slate-600 text-center">Organize sua vida financeira com inteligência.</p>
         </div>
       </aside>
 
@@ -230,7 +230,7 @@ export default function Home() {
               <h1 className="text-sm font-semibold text-slate-100 truncate">
                 {current?.title || 'Nova conversa'}
               </h1>
-              <p className="text-xs text-slate-500">Seu dinheiro, mais inteligente.</p>
+              <p className="text-xs text-slate-500">Dê o próximo passo na sua vida financeira.</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500 flex-shrink-0">
