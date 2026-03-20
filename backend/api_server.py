@@ -36,11 +36,9 @@ async def chat(request: Request):
                 "messages": [
                     {
                         "role": "user",
-                        "content": f"Finanças Brasil 2026: {msg}. Responda direto e prático."
+                        "content": msg
                     }
-                ],
-                "temperature": 0.1,
-                "max_tokens": 400
+                ]
             }
         )
 
