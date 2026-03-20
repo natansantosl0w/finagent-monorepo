@@ -18,7 +18,7 @@ def health():
 @app.post("/chat")
 async def chat(request: Request):
     data = await request.json()
-    msg = data["message"]
+    msg = data.get("message", "")
 
     groq_key = os.getenv("GROQ_API_KEY")
     together_key = os.getenv("TOGETHER_API_KEY")
@@ -27,21 +27,23 @@ async def chat(request: Request):
         return {"response": "❌ Nenhuma API key configurada"}
 
     try:
-        # TENTA GROQ PRIMEIRO
+        # 🔥 GROQ (principal)
         if groq_key:
             url = "https://api.groq.com/openai/v1/chat/completions"
             key = groq_key
+            model = "llama3-8b-8192"  # ✅ modelo garantido
         else:
-            # fallback Together (simples)
+            # fallback Together
             url = "https://api.together.xyz/v1/chat/completions"
             key = together_key
+            model = "meta-llama/Llama-3-8b-chat-hf"
 
         payload = {
-            "model": "llama3-70b-8192",
+            "model": model,
             "messages": [
                 {
                     "role": "user",
-                    "content": f"Finanças Brasil 2026: {msg}. Responda direto."
+                    "content": f"Finanças Brasil 2026: {msg}. Responda direto e prático."
                 }
             ],
             "max_tokens": 400,
